@@ -1,0 +1,54 @@
+name: Build Windows App
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+
+jobs:
+  build-windows:
+    name: Build Windows (.exe)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Check Flutter environment
+        run: flutter doctor -v
+
+      - name: Enable Windows desktop support
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows Executable (Release)
+        run: flutter build windows --release
+
+      - name: Package Windows Release into ZIP
+        shell: pwsh
+        run: |
+          if (Test-Path "build\windows\x64\runner\Release") {
+            Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "windows-release.zip" -Force
+          } elseif (Test-Path "build\windows\runner\Release") {
+            Compress-Archive -Path "build\windows\runner\Release\*" -DestinationPath "windows-release.zip" -Force
+          } else {
+            Write-Error "Could not find Flutter Windows Release build output folder."
+            exit 1
+          }
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-desktop-release
+          path: windows-release.zip
+          retention-days: 14
