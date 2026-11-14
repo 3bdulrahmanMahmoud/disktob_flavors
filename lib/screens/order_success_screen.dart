@@ -1,11 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/cart_item.dart';
+import '../utils/app_strings.dart';
 
 class OrderSuccessScreen extends StatefulWidget {
   final int orderNumber;
+  final bool isArabic;
   final bool isDineIn;
+  final String? tableNumber;
   final String paymentMethod;
+  final String authCode;
   final List<CartItem> orderedItems;
   final double grandTotal;
   final VoidCallback onFinish;
@@ -13,8 +17,11 @@ class OrderSuccessScreen extends StatefulWidget {
   const OrderSuccessScreen({
     super.key,
     required this.orderNumber,
+    required this.isArabic,
     required this.isDineIn,
+    this.tableNumber,
     required this.paymentMethod,
+    required this.authCode,
     required this.orderedItems,
     required this.grandTotal,
     required this.onFinish,
@@ -25,7 +32,7 @@ class OrderSuccessScreen extends StatefulWidget {
 }
 
 class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
-  int _secondsRemaining = 12;
+  int _secondsRemaining = 15;
   Timer? _countdownTimer;
 
   @override
@@ -50,50 +57,64 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = widget.isArabic;
+    final curr = AppStrings.currency(isAr);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: const Color(0xFFF3F4F6),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 620),
+            constraints: const BoxConstraints(maxWidth: 580),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Top Success Indicator
                 Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE8F5E9),
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withValues(alpha: 0.2),
+                        blurRadius: 16,
+                        spreadRadius: 4,
+                      ),
+                    ],
                   ),
                   child: const Icon(
                     Icons.check_circle_rounded,
                     color: Color(0xFF2E7D32),
-                    size: 72,
+                    size: 68,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                const Text(
-                  'تم استلام طلبك بنجاح!',
-                  style: TextStyle(
-                    fontSize: 28,
+                Text(
+                  isAr ? 'تم تأكيد طلبك بنجاح! 🎉' : 'Order Confirmed Successfully! 🎉',
+                  style: const TextStyle(
+                    fontSize: 26,
                     fontWeight: FontWeight.w900,
                     color: Color(0xFF1E1E1E),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   widget.paymentMethod == 'card'
-                      ? 'تم الدفع بنجاح. يرجى أخذ الإيصال ومتابعة شاشة النداء.'
-                      : 'يرجى التوجه إلى الخزينة لدفع الفاتورة وتأكيد التحضير.',
+                      ? (isAr
+                          ? 'تم الدفع بالبطاقة. برجاء استلام الإيصال ومتابعة شاشة الاستدعاء.'
+                          : 'Card Payment Approved. Please take your printed receipt.')
+                      : (isAr
+                          ? 'يرجى التوجه لخزينة الكاشير لدفع الحساب برقم الطلب واستلام الوجبة.'
+                          : 'Please proceed to cashier counter to settle payment and pick up your meal.'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, color: Colors.grey.shade700),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
                 ),
                 const SizedBox(height: 24),
 
-                // Receipt Ticket Box
+                // Realistic Thermal Paper Receipt Card
                 Container(
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
@@ -101,41 +122,58 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 20,
-                        offset: const Offset(0, 8),
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
                   child: Column(
                     children: [
-                      // Order Number
-                      const Text(
-                        'رقم طلبك',
-                        style: TextStyle(
+                      // Restaurant Header on Receipt
+                      Text(
+                        isAr ? 'برجر كينجدوم - فرع النيل' : 'BURGER KINGDOM - NILE',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                          letterSpacing: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tax ID: 648-291-503 • Kiosk #03',
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontFamily: 'monospace'),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Order Number
+                      Text(
+                        isAr ? 'رقم الطلب للاستدعاء' : 'CALL ORDER NUMBER',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       Text(
                         '#B-${widget.orderNumber}',
                         style: const TextStyle(
                           fontSize: 54,
                           fontWeight: FontWeight.w900,
                           color: Color(0xFFFF5722),
-                          letterSpacing: 2,
+                          letterSpacing: 3,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
 
-                      // Order Type & Payment Badges
+                      // Badges: Dine-In / Takeaway & Table
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFF3E0),
                               borderRadius: BorderRadius.circular(20),
@@ -144,24 +182,28 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                               children: [
                                 Icon(
                                   widget.isDineIn ? Icons.restaurant : Icons.shopping_bag,
-                                  size: 16,
+                                  size: 15,
                                   color: const Color(0xFFE65100),
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  widget.isDineIn ? 'تناول بالمطعم' : 'طلب سفري',
+                                  widget.isDineIn
+                                      ? (widget.tableNumber != null
+                                          ? '${AppStrings.dineIn(isAr)} (طاولة #${widget.tableNumber})'
+                                          : AppStrings.dineIn(isAr))
+                                      : AppStrings.takeaway(isAr),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     color: Color(0xFFE65100),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: widget.paymentMethod == 'card'
                                   ? const Color(0xFFE3F2FD)
@@ -169,10 +211,12 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              widget.paymentMethod == 'card' ? '💳 بطاقة ائتمان' : '💵 كاش بالخزينة',
+                              widget.paymentMethod == 'card'
+                                  ? (isAr ? '💳 بطاقة بنكية' : '💳 Card POS')
+                                  : (isAr ? '💵 كاش بالخزينة' : '💵 Cash at Counter'),
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                fontSize: 12,
                                 color: widget.paymentMethod == 'card'
                                     ? const Color(0xFF1565C0)
                                     : const Color(0xFF2E7D32),
@@ -183,32 +227,45 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                       ),
 
                       const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20),
+                        padding: EdgeInsets.symmetric(vertical: 18),
                         child: Divider(thickness: 1.2),
                       ),
 
-                      // Items list preview
+                      // Itemized List
                       ...widget.orderedItems.map((cartItem) {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                '${cartItem.quantity}x ${cartItem.item.nameAr}',
-                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${cartItem.quantity}x ${cartItem.item.name(isAr)}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                  Text(
+                                    '${cartItem.totalPrice.toStringAsFixed(0)} $curr',
+                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                '${cartItem.totalPrice.toStringAsFixed(0)} ج.م',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                              ),
+                              if (cartItem.isCombo || cartItem.selectedSize.extraPrice > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 1),
+                                  child: Text(
+                                    '• ${cartItem.selectedSize.name(isAr)} ${cartItem.isCombo ? (isAr ? "+ وجبة كومبو" : "+ Combo Meal") : ""}',
+                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                  ),
+                                ),
                             ],
                           ),
                         );
                       }),
 
                       const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.symmetric(vertical: 14),
                         child: Divider(thickness: 1.2),
                       ),
 
@@ -216,12 +273,12 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'الإجمالي المدفوع:',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          Text(
+                            isAr ? 'الإجمالي النهائي:' : 'Grand Total:',
+                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            '${widget.grandTotal.toStringAsFixed(0)} ج.م',
+                            '${widget.grandTotal.toStringAsFixed(0)} $curr',
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
@@ -230,17 +287,56 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+
+                      // Simulated Barcode / QR Code Graphic
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.qr_code_2_rounded, size: 40, color: Colors.black87),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'TRACK: ${widget.authCode}',
+                                      style: const TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      isAr ? 'امسح الباركود عند شاشة الاستلام' : 'Scan for Live Pickup Status',
+                                      style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
 
                 // Reset Button & Countdown Notice
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF5722),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+                    padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 3,
                   ),
@@ -251,18 +347,22 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.touch_app_rounded, size: 24),
-                      const SizedBox(width: 10),
+                      const Icon(Icons.touch_app_rounded, size: 22),
+                      const SizedBox(width: 8),
                       Text(
-                        'بدء طلب جديد الآن ($_secondsRemaining)',
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                        isAr
+                            ? 'بدء طلب جديد الآن ($_secondsRemaining)'
+                            : 'Start New Order Now ($_secondsRemaining)',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Text(
-                  'سيتم إعادة ضبط الشاشة تلقائياً للعميل التالي خلال $_secondsRemaining ثانية',
+                  isAr
+                      ? 'سيتم إعادة ضبط الشاشة تلقائياً للعميل التالي خلال $_secondsRemaining ثانية'
+                      : 'Screen will automatically reset for the next guest in $_secondsRemaining seconds',
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
               ],

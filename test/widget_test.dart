@@ -11,8 +11,8 @@ void main() {
 
     await tester.pumpWidget(const RestaurantKioskApp());
 
-    expect(find.text('BURGER KINGDOM'), findsOneWidget);
-    expect(find.text('تناول في المطعم'), findsOneWidget);
-    expect(find.text('طلب سفري / تيك أواي'), findsOneWidget);
+    expect(find.text('برجر كينجدوم'), findsOneWidget);
+    expect(find.text('تناول بالمطعم'), findsOneWidget);
+    expect(find.text('طلب سفري'), findsOneWidget);
   });
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/cart_item.dart';
+import '../utils/app_strings.dart';
 
 class CartPanel extends StatelessWidget {
   final List<CartItem> cartItems;
+  final bool isArabic;
   final Function(String uniqueId, int newQty) onUpdateQuantity;
   final Function(String uniqueId) onRemoveItem;
   final VoidCallback onClearCart;
@@ -11,6 +13,7 @@ class CartPanel extends StatelessWidget {
   const CartPanel({
     super.key,
     required this.cartItems,
+    required this.isArabic,
     required this.onUpdateQuantity,
     required this.onRemoveItem,
     required this.onClearCart,
@@ -30,6 +33,8 @@ class CartPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final curr = AppStrings.currency(isArabic);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -55,9 +60,9 @@ class CartPanel extends StatelessWidget {
                 const Icon(Icons.receipt_long_rounded, color: Color(0xFFFF5722), size: 24),
                 const SizedBox(width: 8),
                 Text(
-                  'تفاصيل الطلب (${cartItems.length})',
+                  '${AppStrings.orderSummary(isArabic)} (${cartItems.length})',
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1E1E1E),
                   ),
@@ -71,7 +76,10 @@ class CartPanel extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
                     icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                    label: const Text('مسح', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    label: Text(
+                      AppStrings.clear(isArabic),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
                   ),
               ],
             ),
@@ -99,9 +107,9 @@ class CartPanel extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
-                            'سلة طلبك فارغة!',
-                            style: TextStyle(
+                          Text(
+                            AppStrings.emptyCartTitle(isArabic),
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF333333),
@@ -109,12 +117,9 @@ class CartPanel extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'اختر من قائمتنا الشهية للمتابعة إلى الدفع',
+                            AppStrings.emptyCartSubtitle(isArabic),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade600,
-                            ),
+                            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                           ),
                         ],
                       ),
@@ -129,7 +134,7 @@ class CartPanel extends StatelessWidget {
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Mini Food Thumbnail
+                          // Mini Thumbnail
                           ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: SizedBox(
@@ -149,35 +154,82 @@ class CartPanel extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
 
-                          // Item Details
+                          // Details
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  item.item.nameAr,
+                                  item.item.name(isArabic),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                     color: Color(0xFF1E1E1E),
                                   ),
                                 ),
+                                // Size & Combo tags
+                                Row(
+                                  children: [
+                                    if (item.selectedSize.extraPrice > 0)
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 2, right: 4),
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade200,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          item.selectedSize.name(isArabic),
+                                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    if (item.isCombo)
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 2),
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber.shade100,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          isArabic ? '🍟 كومبو' : '🍟 Combo',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.orange.shade900,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                if (item.removedIngredients.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text(
+                                      item.removedIngredients.join('، '),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.red.shade700,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
                                 if (item.selectedExtras.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 2),
                                     child: Text(
-                                      item.selectedExtras.map((e) => '+ ${e.nameAr}').join(', '),
+                                      item.selectedExtras.map((e) => '+ ${e.name(isArabic)}').join(', '),
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: Colors.grey.shade700,
                                       ),
                                     ),
                                   ),
-                                if (item.note != null)
+                                if (item.specialNote != null)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 2),
                                     child: Text(
-                                      'ملاحظة: ${item.note}',
+                                      '${isArabic ? "ملاحظة" : "Note"}: ${item.specialNote}',
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontStyle: FontStyle.italic,
@@ -187,7 +239,7 @@ class CartPanel extends StatelessWidget {
                                   ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  '${item.totalPrice.toStringAsFixed(0)} ج.م',
+                                  '${item.totalPrice.toStringAsFixed(0)} $curr',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: 14,
@@ -198,7 +250,7 @@ class CartPanel extends StatelessWidget {
                             ),
                           ),
 
-                          // Quantity Controls
+                          // Quantity Stepper
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.grey.shade100,
@@ -258,16 +310,16 @@ class CartPanel extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('المجموع الفرعي:', style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-                    Text('${subtotal.toStringAsFixed(0)} ج.م', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(AppStrings.subtotal(isArabic), style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+                    Text('${subtotal.toStringAsFixed(0)} $curr', style: const TextStyle(fontWeight: FontWeight.w600)),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('ضريبة القيمة المضافة (14%):', style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-                    Text('${vat.toStringAsFixed(1)} ج.م', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(AppStrings.vat(isArabic), style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+                    Text('${vat.toStringAsFixed(1)} $curr', style: const TextStyle(fontWeight: FontWeight.w600)),
                   ],
                 ),
                 const Padding(
@@ -277,16 +329,16 @@ class CartPanel extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'الإجمالي النهائي:',
-                      style: TextStyle(
-                        fontSize: 18,
+                    Text(
+                      AppStrings.total(isArabic),
+                      style: const TextStyle(
+                        fontSize: 17,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1E1E1E),
                       ),
                     ),
                     Text(
-                      '${grandTotal.toStringAsFixed(0)} ج.م',
+                      '${grandTotal.toStringAsFixed(0)} $curr',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -309,14 +361,14 @@ class CartPanel extends StatelessWidget {
                       elevation: cartItems.isEmpty ? 0 : 3,
                     ),
                     onPressed: cartItems.isEmpty ? null : onCheckout,
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.payment_rounded, size: 22),
-                        SizedBox(width: 8),
+                        const Icon(Icons.payment_rounded, size: 22),
+                        const SizedBox(width: 8),
                         Text(
-                          'تأكيد الطلب والدفع',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                          AppStrings.checkoutBtn(isArabic),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),

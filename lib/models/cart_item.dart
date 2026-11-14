@@ -3,20 +3,29 @@ import 'menu_item.dart';
 class CartItem {
   final String uniqueId;
   final MenuItem item;
+  final MealSize selectedSize;
+  final bool isCombo;
+  final List<String> removedIngredients;
   final List<ExtraOption> selectedExtras;
   int quantity;
-  final String? note;
+  final String? specialNote;
 
   CartItem({
     required this.uniqueId,
     required this.item,
-    required this.selectedExtras,
+    required this.selectedSize,
+    this.isCombo = false,
+    this.removedIngredients = const [],
+    this.selectedExtras = const [],
     this.quantity = 1,
-    this.note,
+    this.specialNote,
   });
 
   double get unitPrice {
-    double total = item.price;
+    double total = item.price + selectedSize.extraPrice;
+    if (isCombo) {
+      total += item.comboPrice;
+    }
     for (final extra in selectedExtras) {
       total += extra.price;
     }
@@ -26,16 +35,22 @@ class CartItem {
   double get totalPrice => unitPrice * quantity;
 
   CartItem copyWith({
-    int? quantity,
+    MealSize? selectedSize,
+    bool? isCombo,
+    List<String>? removedIngredients,
     List<ExtraOption>? selectedExtras,
-    String? note,
+    int? quantity,
+    String? specialNote,
   }) {
     return CartItem(
       uniqueId: uniqueId,
       item: item,
+      selectedSize: selectedSize ?? this.selectedSize,
+      isCombo: isCombo ?? this.isCombo,
+      removedIngredients: removedIngredients ?? this.removedIngredients,
       selectedExtras: selectedExtras ?? this.selectedExtras,
       quantity: quantity ?? this.quantity,
-      note: note ?? this.note,
+      specialNote: specialNote ?? this.specialNote,
     );
   }
 }

@@ -1,15 +1,45 @@
 import 'package:flutter/material.dart';
+import '../utils/app_strings.dart';
+import '../widgets/table_tracker_dialog.dart';
 
-class WelcomeScreen extends StatelessWidget {
-  final Function(bool isDineIn) onSelectOrderType;
+class WelcomeScreen extends StatefulWidget {
+  final bool isArabic;
+  final VoidCallback onToggleLanguage;
+  final Function(bool isDineIn, String? tableNumber) onSelectOrderType;
 
   const WelcomeScreen({
     super.key,
+    required this.isArabic,
+    required this.onToggleLanguage,
     required this.onSelectOrderType,
   });
 
   @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  void _handleDineIn() {
+    showDialog(
+      context: context,
+      builder: (ctx) => TableTrackerDialog(
+        isArabic: widget.isArabic,
+        onConfirm: (tableNum) {
+          Navigator.pop(ctx);
+          widget.onSelectOrderType(true, tableNum);
+        },
+        onSkip: () {
+          Navigator.pop(ctx);
+          widget.onSelectOrderType(true, null);
+        },
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isAr = widget.isArabic;
+
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -26,12 +56,42 @@ class WelcomeScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withValues(alpha: 0.85),
+                  Colors.black.withValues(alpha: 0.88),
                   Colors.black.withValues(alpha: 0.65),
-                  Colors.black.withValues(alpha: 0.9),
+                  Colors.black.withValues(alpha: 0.92),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+
+          // Top Language Toggle
+          Positioned(
+            top: 24,
+            left: isAr ? 24 : null,
+            right: isAr ? null : 24,
+            child: InkWell(
+              onTap: widget.onToggleLanguage,
+              borderRadius: BorderRadius.circular(30),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white38),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(isAr ? '🇬🇧' : '🇪🇬', style: const TextStyle(fontSize: 20)),
+                    const SizedBox(width: 8),
+                    Text(
+                      isAr ? 'English' : 'عربي',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -54,8 +114,8 @@ class WelcomeScreen extends StatelessWidget {
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFFFF5722).withValues(alpha: 0.5),
-                          blurRadius: 30,
-                          spreadRadius: 5,
+                          blurRadius: 36,
+                          spreadRadius: 6,
                         ),
                       ],
                     ),
@@ -67,21 +127,23 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  const Text(
-                    'BURGER KINGDOM',
+                  Text(
+                    isAr ? 'برجر كينجدوم' : 'BURGER KINGDOM',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 44,
+                    style: const TextStyle(
+                      fontSize: 46,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
                       letterSpacing: 2,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'طعم اللحم المشوي الحقيقي • خدمة ذاتية سريعة',
+                  const SizedBox(height: 8),
+                  Text(
+                    isAr
+                        ? 'طعم اللحم المشوي على اللهب • خدمة ذاتية فائقة السرعة'
+                        : 'Flame-Grilled Gourmet Burgers • Instant Self-Service',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 18,
                       color: Color(0xFFFFCC80),
                       fontWeight: FontWeight.w500,
@@ -89,10 +151,12 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 48),
 
-                  const Text(
-                    'من فضلك اختر طريقة استلام الطلب للبدء',
+                  Text(
+                    isAr
+                        ? 'من فضلك اختر طريقة استلام الطلب للبدء'
+                        : 'Please choose dining option to begin',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -100,7 +164,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
 
-                  // Dine In vs Takeaway Big Kiosk Buttons
+                  // Dine In vs Takeaway Cards
                   Wrap(
                     spacing: 32,
                     runSpacing: 24,
@@ -108,25 +172,33 @@ class WelcomeScreen extends StatelessWidget {
                     children: [
                       // Dine In Card
                       _OrderTypeCard(
-                        title: 'تناول في المطعم',
-                        subtitle: 'Dine In • استمتع بوجبتك في صالتنا',
+                        title: AppStrings.dineIn(isAr),
+                        subtitle: isAr
+                            ? 'Dine In • استمتع بوجبتك الساخنة في صالتنا'
+                            : 'Enjoy your hot meal inside our lounge',
                         icon: Icons.restaurant_rounded,
                         color: const Color(0xFFFF5722),
-                        onTap: () => onSelectOrderType(true),
+                        buttonText: isAr ? 'تناول بالصالة' : 'Dine In Here',
+                        onTap: _handleDineIn,
                       ),
 
                       // Takeaway Card
                       _OrderTypeCard(
-                        title: 'طلب سفري / تيك أواي',
-                        subtitle: 'Takeaway • استلم طلبك جاهزاً ومغلفاً',
+                        title: AppStrings.takeaway(isAr),
+                        subtitle: isAr
+                            ? 'Takeaway • استلم وجبتك مغلفة ومعبأة للسفر'
+                            : 'Pick up your packaged order to go',
                         icon: Icons.shopping_bag_rounded,
                         color: const Color(0xFF2E7D32),
-                        onTap: () => onSelectOrderType(false),
+                        buttonText: isAr ? 'طلب تيك أواي' : 'Order Takeaway',
+                        onTap: () => widget.onSelectOrderType(false, null),
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 48),
+
+                  // Subtle Touch to Order Footer Bar
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(
@@ -134,17 +206,19 @@ class WelcomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30),
                       border: Border.all(color: Colors.white24),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.touch_app_rounded, color: Colors.white70, size: 18),
-                        SizedBox(width: 8),
+                        const Icon(Icons.touch_app_rounded, color: Colors.white70, size: 18),
+                        const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            'المس الشاشة في أي وقت للبدء | Touch to Start',
+                            isAr
+                                ? 'المس الشاشة في أي وقت للبدء | Touch to Start'
+                                : 'Touch any option to start your order',
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Colors.white70, fontSize: 13),
+                            style: const TextStyle(color: Colors.white70, fontSize: 13),
                           ),
                         ),
                       ],
@@ -165,6 +239,7 @@ class _OrderTypeCard extends StatefulWidget {
   final String subtitle;
   final IconData icon;
   final Color color;
+  final String buttonText;
   final VoidCallback onTap;
 
   const _OrderTypeCard({
@@ -172,6 +247,7 @@ class _OrderTypeCard extends StatefulWidget {
     required this.subtitle,
     required this.icon,
     required this.color,
+    required this.buttonText,
     required this.onTap,
   });
 
@@ -201,8 +277,8 @@ class _OrderTypeCardState extends State<_OrderTypeCard> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: widget.color.withValues(alpha: _isHovered ? 0.4 : 0.25),
-                  blurRadius: _isHovered ? 25 : 15,
+                  color: widget.color.withValues(alpha: _isHovered ? 0.45 : 0.22),
+                  blurRadius: _isHovered ? 28 : 16,
                   offset: const Offset(0, 10),
                 ),
               ],
@@ -239,25 +315,25 @@ class _OrderTypeCardState extends State<_OrderTypeCard> {
                 const SizedBox(height: 20),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
                   decoration: BoxDecoration(
                     color: widget.color,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'ابدأ الطلب',
-                        style: TextStyle(
+                        widget.buttonText,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(width: 6),
-                      Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
                     ],
                   ),
                 ),

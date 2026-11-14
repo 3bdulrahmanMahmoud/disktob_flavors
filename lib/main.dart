@@ -7,13 +7,26 @@ void main() {
   runApp(const RestaurantKioskApp());
 }
 
-class RestaurantKioskApp extends StatelessWidget {
+class RestaurantKioskApp extends StatefulWidget {
   const RestaurantKioskApp({super.key});
+
+  @override
+  State<RestaurantKioskApp> createState() => _RestaurantKioskAppState();
+}
+
+class _RestaurantKioskAppState extends State<RestaurantKioskApp> {
+  bool _isArabic = true;
+
+  void _toggleLanguage() {
+    setState(() {
+      _isArabic = !_isArabic;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Burger Kingdom - Kiosk System',
+      title: _isArabic ? 'برجر كينجدوم - كشك الخدمة الذاتية' : 'Burger Kingdom Kiosk',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -24,22 +37,31 @@ class RestaurantKioskApp extends StatelessWidget {
           surface: Colors.white,
         ),
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-        fontFamily: 'Segoe UI', // Clean, crisp default font on Windows & Android
+        fontFamily: 'Segoe UI',
       ),
       builder: (context, child) {
-        // Enforce Arabic RTL layout for the kiosk experience
         return Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: _isArabic ? TextDirection.rtl : TextDirection.ltr,
           child: child!,
         );
       },
-      home: const KioskRoot(),
+      home: KioskRoot(
+        isArabic: _isArabic,
+        onToggleLanguage: _toggleLanguage,
+      ),
     );
   }
 }
 
 class KioskRoot extends StatefulWidget {
-  const KioskRoot({super.key});
+  final bool isArabic;
+  final VoidCallback onToggleLanguage;
+
+  const KioskRoot({
+    super.key,
+    required this.isArabic,
+    required this.onToggleLanguage,
+  });
 
   @override
   State<KioskRoot> createState() => _KioskRootState();
@@ -48,10 +70,12 @@ class KioskRoot extends StatefulWidget {
 class _KioskRootState extends State<KioskRoot> {
   bool _isInOrdering = false;
   bool _isDineIn = true;
+  String? _tableNumber;
 
-  void _startOrder(bool isDineIn) {
+  void _startOrder(bool isDineIn, String? tableNumber) {
     setState(() {
       _isDineIn = isDineIn;
+      _tableNumber = tableNumber;
       _isInOrdering = true;
     });
   }
@@ -59,6 +83,7 @@ class _KioskRootState extends State<KioskRoot> {
   void _returnToWelcome() {
     setState(() {
       _isInOrdering = false;
+      _tableNumber = null;
     });
   }
 
@@ -73,10 +98,14 @@ class _KioskRootState extends State<KioskRoot> {
           ? KioskOrderScreen(
               key: const ValueKey('OrderScreen'),
               initialIsDineIn: _isDineIn,
+              initialTableNumber: _tableNumber,
+              initialIsArabic: widget.isArabic,
               onCancelToWelcome: _returnToWelcome,
             )
           : WelcomeScreen(
               key: const ValueKey('WelcomeScreen'),
+              isArabic: widget.isArabic,
+              onToggleLanguage: widget.onToggleLanguage,
               onSelectOrderType: _startOrder,
             ),
     );
